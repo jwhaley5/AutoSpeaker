@@ -6,33 +6,41 @@ import matplotlib.pyplot as plt
 countryRoads = "Take_Me_Home.wav"
 countryNoise = "DemonstrationAudio.wav"
 
+noiseFile = "440HzSine.wav"
+noiseySignal = "noisyTrumpet.wav"
+originalWav = "trumpet.wav"
+
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 2
 RATE = 44100
-RECORD_SECONDS = 2  # We will need to change this based on specifications for autocorrelation
+RECORD_SECONDS = 2  # We will need to change this based on specifications the group decides on.
 WAVE_OUTPUT_FILENAME = "output.wav"
 
-def readMusic():
-    fs, data = wavfile.read('440HzSine.wav')
-    print(fs)
-    plt.plot(data)
-    plt.ylabel("16-bit PCM Sample")
 
-    
-    sinewav = wave.open("440HzSine.wav", 'r')
-    sines = sinewav.readframes(48075).hex()
-    sinlist = [int(sines[i:i + 2],16) for i in range(0, len(sines), 2)]
-    sinewav.close()
-    wf = wave.open('noisyTrumpet.wav', 'r')
-    print(wf.getparams())
-    noisy_bytes = wf.readframes(48075).hex()
+def read_music():
+    numFrames = 48000
+    '''actual_noise contains the noise signal useful for checking the result'''
+    actual_noise = wave.open(noiseFile, 'r')
+    noise = actual_noise.readframes(numFrames).hex()
+    noise_list = [int(noise[i:i + 2],16) for i in range(0, len(noise), 2)]
+    actual_noise.close()
+
+    '''Noisey Signal'''
+    wf = wave.open(noiseySignal, 'r')
+    print("\nNoisey Signal:", wf.getparams(), '\n')
+    noisy_bytes = wf.readframes(numFrames).hex()
     wf.close()
-    wt = wave.open('trumpet.wav', 'r')
-    print(wt.getparams())
+
+    '''Original Wave'''
+    wt = wave.open(originalWav, 'r')
+    print("Original Wave:", wt.getparams(), '\n')
     wt.rewind()
-    bytes_read = wt.readframes(48075)
+    bytes_read = wt.readframes(numFrames)
     bytes_read = bytes_read.hex()
+    wt.close()
+
+    '''Uncomment the Following if you would like to see the raw pairs of hex bytes'''
     #print("bytes containing the trumpet with added noise: ", noisy_bytes)
     #print("bytes containing the trumpet with no noise:    ", bytes_read)
 
@@ -45,12 +53,43 @@ def readMusic():
         if num < 0:
             num = num + 255
         noise_arr.append(num)
-    print(noise_arr)
-    print(sinlist)
+    print("Expected output: ", noise_arr)
+    print("Actual output:   ", noise_list, '\n')
+
+    '''Wave Output function'''
+    output = wave.open("output.wav", 'w')
+    output.setnchannels(1)
+    output.setsampwidth(2)
+    output.setframerate(44100)
+    output.setnframes(numFrames)
+    output.setcomptype('NONE', 'not compressed')
+    output.writeframes(bytes(noise_list))
+    output.close()
+
+    '''Plot the 3 different Wave Files'''
+    numSamples = 1000
+    title = str(numSamples) + " Samples"
+    plt.title(title)
+    plot_data(numSamples)
+
+def plot_data(numSamples):
+    x_axis = range(numSamples)
+    '''Noise Signal'''
+    fs, data = wavfile.read(noiseFile)
+    plot_data1 = data[:numSamples]
+    plt.plot(x_axis, plot_data1, label='Noise', color='green', marker='o', linestyle='solid', linewidth=.5, markersize=1)
+    '''Noise + Original Signals'''
+    fs, data2 = wavfile.read(noiseySignal)
+    plot_data2 = data2[:numSamples]
+    plt.plot(x_axis, plot_data2, label="Noise + Original", color='red', marker='o', linestyle='solid', linewidth=.5, markersize=1)
+    '''Original Wave Signal'''
+    fs, data3 = wavfile.read(originalWav)
+    plot_data3 = data3[:numSamples]
+    plt.plot(x_axis, plot_data3, label="Original Wave", color='blue', marker='o', linestyle='solid', linewidth=.5, markersize=1)
+    plt.xlabel("Sample #")
+    plt.ylabel("Amplitude")
+    plt.legend()
     plt.show()
-    wt.close()
-
-
 
 
 def room_noise():
@@ -83,6 +122,7 @@ def room_noise():
     wf.writeframes(b''.join(frames))
     wf.close()
 
+
 if __name__ == "__main__" :
-    readMusic()
+    read_music()
 
