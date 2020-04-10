@@ -19,11 +19,11 @@ WAVE_OUTPUT_FILENAME = "output.wav"
 
 
 def read_music():
-    numFrames = 48000
+    numFrames = 100
     '''actual_noise contains the noise signal useful for checking the result'''
     actual_noise = wave.open(noiseFile, 'r')
     noise = actual_noise.readframes(numFrames).hex()
-    noise_list = [int(noise[i:i + 2],16) for i in range(0, len(noise), 2)]
+    noise_list = [int(noise[i:i + 2], 16) for i in range(0, len(noise), 2)]
     actual_noise.close()
 
     '''Noisey Signal'''
@@ -55,8 +55,21 @@ def read_music():
         noise_arr.append(num)
     print("Expected output: ", noise_arr)
     print("Actual output:   ", noise_list, '\n')
+    x_axis = range(numFrames * 2)
+    plt.plot(x_axis, noise_arr, label='Noise-arr', color='red', marker='o', linestyle='solid', linewidth=.5,
+             markersize=1)
+    plt.plot(x_axis, noise_list, label='Noise_list', color='green', marker='o', linestyle='solid', linewidth=.5,
+             markersize=1)
+    plt.xlabel("Sample #")
+    plt.ylabel("Amplitude")
+    plt.legend()
+    title = str(numFrames) + " Samples"
+    plt.title(title)
+    plt.show()
 
     '''Wave Output function'''
+    '''Plot the 3 different Wave Files'''
+    '''
     output = wave.open("output.wav", 'w')
     output.setnchannels(1)
     output.setsampwidth(2)
@@ -66,12 +79,11 @@ def read_music():
     output.writeframes(bytes(noise_list))
     output.close()
 
-    '''Plot the 3 different Wave Files'''
     numSamples = 1000
     title = str(numSamples) + " Samples"
     plt.title(title)
     plot_data(numSamples)
-
+    '''
 def plot_data(numSamples):
     x_axis = range(numSamples)
     '''Noise Signal'''
@@ -89,6 +101,25 @@ def plot_data(numSamples):
     plt.xlabel("Sample #")
     plt.ylabel("Amplitude")
     plt.legend()
+    plt.show()
+
+def find_delay():
+    x = [-13, -49, -56, -10, 40, 20, 20, 100, 5, 10, 5, 5, 5, 5, -13, -49, -56, -10, 40, 20, 20, 100, 5, 10, 5, 5, 5, 5]
+    y = [5, 5, 5, 5, -13, -49, -56, -10, 40, 20, 20, 100, 5, 10, 5, 5, 5, 5, -13, -49, -56, -10, 40, 20, 20, 100, 5, 10]
+    # correlate(x,y) is the cross correlation function
+    # returns An N-dimensional array containing a subset of the discrete linear cross-correlation of in1 with in2.
+    t = correlate(x, y)
+    ind = 0
+    max = 0
+    for i in range(len(t)):
+        if t[i] > max:
+            ind = i
+            max = t[i]
+    print("max value is: ", max, " located at: ", ind)
+    print(len(x))
+    print(t)
+    print(len(t))
+    plt.plot(t)
     plt.show()
 
 
@@ -123,6 +154,8 @@ def room_noise():
     wf.close()
 
 
-if __name__ == "__main__" :
+if __name__ == "__main__":
+    #find_delay()
     read_music()
+    #room_noise()
 
